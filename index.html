@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Madeira: 13-Day Nature & Road Trip</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Merriweather:ital,wght@0,300;0,700;1,400&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F9FAFB; /* Cool Gray 50 */
+            color: #1F2937; /* Gray 800 */
+        }
+        
+        h1, h2, h3, .serif {
+            font-family: 'Merriweather', serif;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #A7B098; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #8FA085; 
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+        }
+
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .nav-btn.active {
+            background-color: #3F6212; /* Lime 900ish/Forest Green */
+            color: white;
+            border-color: #3F6212;
+        }
+        
+        .tag-hiking { background-color: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; }
+        .tag-swimming { background-color: #EFF6FF; color: #1E40AF; border: 1px solid #BFDBFE; }
+        .tag-city { background-color: #FFFBEB; color: #92400E; border: 1px solid #FDE68A; }
+        .tag-drive { background-color: #F3F4F6; color: #4B5563; border: 1px solid #E5E7EB; }
+
+    </style>
+    <!-- Chosen Palette: "Laurissilva & Stone". 
+         Background: #F9FAFB (Off-white/Mist). 
+         Primary: #3F6212 (Deep Forest Green). 
+         Secondary: #D97706 (Amber/Poncha). 
+         Accent: #0EA5E9 (Atlantic Blue). 
+         Neutral: #4B5563 (Basalt Grey).
+    -->
+    <!-- Application Structure Plan: 
+         1. Header: Inspirational title + Trip stats summary.
+         2. Dashboard: High-level metrics (Activity balance, Hiking difficulty distribution) to set expectations.
+         3. Interactive Itinerary (Core): 
+            - Horizontal scrollable day selector.
+            - Main "Day Card" showing Morning/Afternoon/Evening, Driving stats, and a localized map concept.
+            - "Highlights" checklist for each day.
+         4. Logistics & Tips: Accordion-style info on driving, packing, and food.
+         5. Logic: State-based rendering of the Day Card based on user selection.
+    -->
+    <!-- Visualization & Content Choices:
+         - Day Intensity Chart (Bar): Goal -> Inform user of physical load per day. Interaction -> Updates on day selection highlight? No, static overview is better for planning.
+         - Elevation Profile (Line): Goal -> Prepare user for the big hikes. Method -> Chart.js Line chart.
+         - Itinerary Flow: Goal -> Organize 13 days of complex travel. Method -> Dynamic DOM updating based on JS object data.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</head>
+<body class="antialiased selection:bg-green-200 selection:text-green-900">
+
+    <!-- Header Section -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="text-3xl text-green-800">🌿</div>
+                <div>
+                    <h1 class="text-xl font-bold text-gray-900 leading-tight">Madeira Wild & Road</h1>
+                    <p class="text-xs text-gray-500 font-medium tracking-wide uppercase">13-Day Nature Expedition</p>
+                </div>
+            </div>
+            <div class="hidden md:flex space-x-6 text-sm font-medium text-gray-600">
+                <span>🚗 13 Days Car Rental</span>
+                <span>🥾 6 Major Hikes</span>
+                <span>🌊 5 Swim Spots</span>
+            </div>
+            <button id="view-map-btn" class="md:hidden text-gray-500 hover:text-green-800 transition">
+                <span>📍 Info</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
+
+        <!-- Intro Section -->
+        <section class="text-center max-w-3xl mx-auto space-y-4">
+            <h2 class="text-3xl md:text-4xl font-serif text-gray-800">Discover the Pearl of the Atlantic</h2>
+            <p class="text-gray-600 leading-relaxed">
+                This interactive itinerary is designed for the independent traveler with a car. It balances the physical challenge of Madeira's world-class <i>Levadas</i> and <i>Veredas</i> with the relaxation of its natural volcanic pools. Use the tabs below to explore your 13-day journey, analyze the hiking profiles, and prepare for the winding roads.
+            </p>
+        </section>
+
+        <!-- Analytics Dashboard -->
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-8 bg-gray-50 rounded-2xl p-6 border border-gray-200 shadow-sm">
+            
+            <!-- Activity Mix Chart -->
+            <div class="flex flex-col">
+                <div class="mb-4">
+                    <h3 class="text-lg font-bold text-gray-800">Trip Intensity Balance</h3>
+                    <p class="text-sm text-gray-500">Physical effort vs. Relaxation across the trip.</p>
+                </div>
+                <div class="flex-grow flex items-center justify-center bg-white rounded-xl p-4 border border-gray-100 shadow-inner">
+                    <div class="chart-container">
+                        <canvas id="tripBalanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hiking Elevation Profile -->
+            <div class="flex flex-col">
+                <div class="mb-4">
+                    <h3 class="text-lg font-bold text-gray-800">Major Hike Elevations</h3>
+                    <p class="text-sm text-gray-500">Altitude variance for the key trails (meters).</p>
+                </div>
+                <div class="flex-grow flex items-center justify-center bg-white rounded-xl p-4 border border-gray-100 shadow-inner">
+                    <div class="chart-container">
+                        <canvas id="elevationChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Interactive Itinerary -->
+        <section id="itinerary-section" class="scroll-mt-24">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-2xl font-serif font-bold text-gray-900">Daily Schedule</h3>
+                <div class="text-sm text-gray-500 hidden sm:block">Click a day to view details</div>
+            </div>
+
+            <!-- Day Navigation (Horizontal Scroll) -->
+            <div class="flex space-x-2 overflow-x-auto pb-4 mb-6 scrollbar-hide" id="day-nav-container">
+                <!-- Buttons injected by JS -->
+            </div>
+
+            <!-- Active Day Content -->
+            <div id="day-content" class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden fade-in min-h-[500px] flex flex-col md:flex-row">
+                
+                <!-- Left: Timeline & Details -->
+                <div class="p-6 md:p-8 md:w-2/3 space-y-6">
+                    <div class="flex justify-between items-start border-b border-gray-100 pb-4">
+                        <div>
+                            <span id="day-tag" class="inline-block px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase mb-2"></span>
+                            <h2 id="day-title" class="text-2xl md:text-3xl font-bold text-gray-800"></h2>
+                            <p id="day-subtitle" class="text-green-700 font-medium mt-1"></p>
+                        </div>
+                        <div class="text-right hidden sm:block">
+                            <div class="text-sm text-gray-400">Total Driving</div>
+                            <div id="day-drive" class="font-mono font-bold text-gray-600"></div>
+                        </div>
+                    </div>
+
+                    <!-- Morning/Afternoon/Evening Grid -->
+                    <div class="space-y-6">
+                        <div class="relative pl-8 border-l-2 border-green-100">
+                            <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-green-200 border-2 border-white"></div>
+                            <h4 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-1">Morning</h4>
+                            <p id="day-morning" class="text-gray-700 leading-relaxed"></p>
+                        </div>
+                        <div class="relative pl-8 border-l-2 border-orange-100">
+                            <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-orange-200 border-2 border-white"></div>
+                            <h4 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-1">Afternoon</h4>
+                            <p id="day-afternoon" class="text-gray-700 leading-relaxed"></p>
+                        </div>
+                        <div class="relative pl-8 border-l-2 border-blue-100">
+                            <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-blue-200 border-2 border-white"></div>
+                            <h4 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-1">Evening</h4>
+                            <p id="day-evening" class="text-gray-700 leading-relaxed"></p>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Checklist -->
+                    <div class="bg-gray-50 rounded-xl p-4 mt-6">
+                        <h4 class="font-bold text-gray-800 mb-3 flex items-center">
+                            <span class="mr-2">✨</span> Don't Miss
+                        </h4>
+                        <ul id="day-highlights" class="space-y-2 text-sm text-gray-600">
+                            <!-- Items injected via JS -->
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Right: Visual Context & Stats -->
+                <div class="bg-gray-900 text-white p-6 md:p-8 md:w-1/3 flex flex-col justify-between relative overflow-hidden">
+                    <!-- Background Decoration -->
+                    <div class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-green-900 opacity-20 blur-3xl"></div>
+                    
+                    <div class="relative z-10">
+                        <h4 class="text-green-400 font-bold uppercase tracking-widest text-xs mb-6">Day Context</h4>
+                        
+                        <div class="space-y-6">
+                            <div>
+                                <div class="text-gray-400 text-xs uppercase mb-1">Primary Region</div>
+                                <div id="day-region" class="text-xl font-serif"></div>
+                            </div>
+                            
+                            <div>
+                                <div class="text-gray-400 text-xs uppercase mb-1">Physical Level</div>
+                                <div class="flex items-center space-x-1" id="day-effort">
+                                    <!-- Circles injected by JS -->
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="text-gray-400 text-xs uppercase mb-1">Must Eat/Drink</div>
+                                <div id="day-food" class="text-lg text-orange-200 italic"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="relative z-10 mt-8 pt-8 border-t border-gray-700">
+                        <p class="text-xs text-gray-400 italic">
+                            "Remember: weather in Madeira changes every 5km. If it's cloudy in the mountains, it might be sunny at the coast."
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Logistics Grid -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Driving Tips -->
+            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-xl mb-4">🚗</div>
+                <h3 class="font-bold text-lg mb-2">Driving on the Island</h3>
+                <ul class="text-sm text-gray-600 space-y-2 list-disc pl-4">
+                    <li><strong>Gears:</strong> Use low gears (1st/2nd) on steep descents to save brakes.</li>
+                    <li><strong>Tunnels:</strong> Madeira is like Swiss cheese. GPS often loses signal inside; know your exit beforehand.</li>
+                    <li><strong>Via Rápida (VR1):</strong> The main highway. Short ramps! Accelerate quickly when merging.</li>
+                    <li><strong>Old Roads (ER):</strong> Scenic but narrow. Be prepared to reverse for passing buses.</li>
+                </ul>
+            </div>
+
+            <!-- Hiking Prep -->
+            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-600 text-xl mb-4">🥾</div>
+                <h3 class="font-bold text-lg mb-2">Hiker's Essentials</h3>
+                <ul class="text-sm text-gray-600 space-y-2 list-disc pl-4">
+                    <li><strong>Layers:</strong> Start cold, get hot, finish cold. Waterproof jacket is mandatory.</li>
+                    <li><strong>Torches:</strong> Many Levadas (like Caldeirão Verde) have dark tunnels. Phone light is okay, headlamp is better.</li>
+                    <li><strong>Footwear:</strong> Hiking boots recommended. Trails can be slippery and muddy.</li>
+                    <li><strong>Webcams:</strong> Check <em>NetMadeira</em> webcams before driving up to peaks.</li>
+                </ul>
+            </div>
+
+            <!-- Food & Drink -->
+            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 text-xl mb-4">🍢</div>
+                <h3 class="font-bold text-lg mb-2">Local Flavors</h3>
+                <ul class="text-sm text-gray-600 space-y-2 list-disc pl-4">
+                    <li><strong>Poncha:</strong> Traditional rum, honey, lemon drink. Try 'Regional' or 'Pescador'. Strong!</li>
+                    <li><strong>Espetada:</strong> Beef skewers grilled on laurel wood.</li>
+                    <li><strong>Bolo do Caco:</strong> Garlic butter sweet potato bread. Staple.</li>
+                    <li><strong>Lapas:</strong> Grilled limpets with lemon. Great coastal snack.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="border-t border-gray-200 pt-8 pb-12 text-center">
+            <p class="text-gray-400 text-sm">Generated for your 13-Day Madeira Adventure.</p>
+        </footer>
+
+    </main>
+
+    <script>
+        // --- Data Layer ---
+        const itinerary = [
+            {
+                day: 1,
+                title: "Arrival & Old Town Charm",
+                subtitle: "Funchal Acclimatization",
+                region: "South Coast (Funchal)",
+                tag: "City",
+                driveTime: "30 min (Airport to City)",
+                effort: 2,
+                morning: "Pick up your rental car. Drive to Funchal. Check into accommodation. Walk along the **Avenida do Mar** promenade to see the ocean and cruise ships.",
+                afternoon: "Explore the **Zona Velha** (Old Town). See the 'Painted Doors' project on Rua de Santa Maria. Visit the **Mercado dos Lavradores** (Farmers Market) to see exotic fruits (don't buy there, it's pricey, just look!).",
+                evening: "Dinner in the Old Town. Try your first *Poncha* at a local bar.",
+                food: "Bolo do Caco & Poncha",
+                highlights: ["Zona Velha Painted Doors", "Mercado dos Lavradores", "Seaside Promenade"]
+            },
+            {
+                day: 2,
+                title: "Above the Clouds",
+                subtitle: "The Peaks & Traditional Houses",
+                region: "Central Mountains / North East",
+                tag: "Hiking",
+                driveTime: "1h 30m total",
+                effort: 5,
+                morning: "**Hike: Pico do Arieiro to Pico Ruivo (PR1)**. Arrive before sunrise (parking fills by 7 AM). This is the most famous hike, traversing ridges above the clouds. 7km one way. Arrange a transfer back or walk back (hard!).",
+                afternoon: "Drive down the north side to **Santana**. Visit the traditional 'A-frame' thatched houses (Casas Típicas). Have a relaxed lunch.",
+                evening: "Return to Funchal via the Faial coastal road if you have energy, or take the tunnels for speed.",
+                food: "Sopa de Trigo (Wheat Soup)",
+                highlights: ["Sunrise at Pico do Arieiro", "Ninho da Manta viewpoint", "Santana Houses"]
+            },
+            {
+                day: 3,
+                title: "The Dragon's Tail",
+                subtitle: "Eastern Point & Golden Sand",
+                region: "East Coast",
+                tag: "Hiking",
+                driveTime: "1h total",
+                effort: 4,
+                morning: "**Hike: Ponta de São Lourenço (PR8)**. A completely different landscape—dry, arid, colorful volcanic rock, and crashing waves. 8km round trip. Windy but stunning.",
+                afternoon: "Drive to **Machico**. Relax on the yellow sand beach (imported sand). Visit the 'Pico do Facho' viewpoint for a view over the bay.",
+                evening: "Drive up to **Cristo Rei** statue in Garajau for sunset. The view down the cliff is vertigo-inducing.",
+                food: "Fresh Tuna Steak",
+                highlights: ["Ponta de São Lourenço Cliffs", "Machico Beach", "Cristo Rei Statue"]
+            },
+            {
+                day: 4,
+                title: "Gardens & Toboggans",
+                subtitle: "Monte & Botanical Wonders",
+                region: "Funchal / Monte",
+                tag: "City",
+                driveTime: "30 min",
+                effort: 2,
+                morning: "Take the cable car from Funchal waterfront up to **Monte**. Visit the **Monte Palace Tropical Garden**—arguably one of the world's most beautiful gardens.",
+                afternoon: "Take the famous **Wicker Toboggan Sledge** ride down halfway. Walk or taxi the rest. Visit the **Botanical Garden** if you love plants, or head back to town.",
+                evening: "Relaxed dinner in Funchal. Maybe explore the western side of the city (Lido area).",
+                food: "Prego no Bolo do Caco",
+                highlights: ["Monte Palace Gardens", "Toboggan Ride", "Cable Car Views"]
+            },
+            {
+                day: 5,
+                title: "Waterfalls & Tunnels",
+                subtitle: "The Rabaçal Valley",
+                region: "West Plateau (Paul da Serra)",
+                tag: "Hiking",
+                driveTime: "1h 45m total",
+                effort: 4,
+                morning: "**Hike: Levada das 25 Fontes & Risco (PR6)**. Park at Rabaçal. Walk down (or take the shuttle). The path leads to a magical lagoon with 25 waterfalls. Also see the massive Risco waterfall.",
+                afternoon: "Drive across **Paul da Serra**, the high plateau. It looks like Scotland. Stop at the 'Jungle Rain' road stretch if accessible.",
+                evening: "Head towards the South-West coast. Dinner in **Calheta** or **Ponta do Sol**.",
+                food: "Grilled Limpets (Lapas)",
+                highlights: ["25 Fontes Lagoon", "Risco Waterfall", "Paul da Serra Plateau"]
+            },
+            {
+                day: 6,
+                title: "Mystical Trees & Black Sand",
+                subtitle: "North West Wonders",
+                region: "North West",
+                tag: "Swimming",
+                driveTime: "1h 30m total",
+                effort: 3,
+                morning: "Drive to **Fanal Forest**. This ancient Laurel forest is UNESCO protected. Best seen in the fog for atmospheric photos of the twisted trees. Cows often roam here.",
+                afternoon: "Drive down to **Seixal**. Swim at the **Seixal Black Sand Beach** (Praia do Porto do Seixal). It's incredibly scenic with green cliffs dropping into the sea.",
+                evening: "Visit the 'Véu da Noiva' (Bridal Veil) waterfall viewpoint nearby.",
+                food: "Polvo (Octopus)",
+                highlights: ["Fanal Forest (Ancient Til trees)", "Seixal Beach", "Véu da Noiva Viewpoint"]
+            },
+            {
+                day: 7,
+                title: "Volcanic Pools",
+                subtitle: "The Northern Tip",
+                region: "North West (Porto Moniz)",
+                tag: "Swimming",
+                driveTime: "45 min (from Seixal area)",
+                effort: 2,
+                morning: "Head to **Porto Moniz**. Swim in the **Natural Swimming Pools**. There are paid ones (safer, concrete paths) and free wild ones (near the fort). Try both.",
+                afternoon: "Take a short walk on **Levada da Ribeira da Janela**. It's flat but offers deep valley views. Or visit the **Ilhéus da Ribeira da Janela** rock formations.",
+                evening: "Dinner in Porto Moniz overlooking the crashing waves.",
+                food: "Espada with Banana",
+                highlights: ["Porto Moniz Pools", "Ribeira da Janela Rocks", "Coastal Drive"]
+            },
+            {
+                day: 8,
+                title: "The Wild West",
+                subtitle: "Cliffs & Cable Cars",
+                region: "West Coast",
+                tag: "Sightseeing",
+                driveTime: "1h 30m total",
+                effort: 3,
+                morning: "Drive to **Achadas da Cruz**. Take the extremely steep cable car down to the Fajã (farming plots by the sea). It's quiet and remote.",
+                afternoon: "Drive to **Ponta do Pargo** to see the lighthouse and the massive cliffs (westernmost point).",
+                evening: "Head down to **Paul do Mar** or **Jardim do Mar**. These are surfer villages with a laid-back vibe. Perfect for sunset.",
+                food: "Fresh Seafood",
+                highlights: ["Achadas da Cruz Cable Car", "Ponta do Pargo Lighthouse", "Paul do Mar Sunset"]
+            },
+            {
+                day: 9,
+                title: "Green Cauldron",
+                subtitle: "Levada do Caldeirão Verde",
+                region: "North / Queimadas",
+                tag: "Hiking",
+                driveTime: "1h 30m total",
+                effort: 4,
+                morning: "**Hike: Levada do Caldeirão Verde (PR9)**. Start at Queimadas Forestry Park. This is a lush, green, jungle-like hike through tunnels to a massive waterfall (13km flat round trip). Bring a torch!",
+                afternoon: "Relax at the Queimadas park cafe (traditional thatched house).",
+                evening: "Drive through **Faial** and stop at the Guindaste Viewpoint (glass floor) if you didn't see it on Day 2.",
+                food: "Picnic in the Park",
+                highlights: ["Queimadas Park", "Caldeirão Verde Waterfall", "Tunnels"]
+            },
+            {
+                day: 10,
+                title: "Valley of the Nuns",
+                subtitle: "Deep Valleys & Heights",
+                region: "Central Valley",
+                tag: "Sightseeing",
+                driveTime: "1h total",
+                effort: 2,
+                morning: "Drive to **Eira do Serrado**. Walk the short path to the viewpoint looking down into the crater-like valley.",
+                afternoon: "Drive down into **Curral das Freiras** (Nuns Valley). Taste chestnut specialties (soup, cake, liqueur).",
+                evening: "Return to Funchal. Optional: Visit **Câmara de Lobos** for dinner (Winston Churchill painted here).",
+                food: "Chestnut Soup & Cake",
+                highlights: ["Eira do Serrado View", "Curral das Freiras Village", "Chestnut Liqueur"]
+            },
+            {
+                day: 11,
+                title: "Skywalk & Hidden Elevators",
+                subtitle: "South Coast Highlights",
+                region: "South Coast",
+                tag: "Swimming",
+                driveTime: "1h total",
+                effort: 2,
+                morning: "Visit **Cabo Girão**, one of the highest sea cliffs in Europe with a glass skywalk.",
+                afternoon: "Drive to **Fajã dos Padres**. Take the cable car down (approx 300m descent). There's an organic farm, a restaurant, and a pebble beach. Great for a secluded swim and lunch.",
+                evening: "Relax in Ponta do Sol, known as the sunniest place on the island.",
+                food: "Mango/Passion Fruit Pudding",
+                highlights: ["Cabo Girão Skywalk", "Fajã dos Padres Cable Car", "Organic Farm Lunch"]
+            },
+            {
+                day: 12,
+                title: "Levada do Rei",
+                subtitle: "The King's Levada",
+                region: "North (São Jorge)",
+                tag: "Hiking",
+                driveTime: "1h 15m total",
+                effort: 3,
+                morning: "**Hike: Levada do Rei (PR18)** in São Jorge. A beautiful, quieter levada that takes you deep into the Laurissilva forest. Includes walking behind a small waterfall.",
+                afternoon: "Visit the **São Vicente Caves** (check if open) or explore the charming town of São Vicente.",
+                evening: "Return to Funchal for a farewell dinner. Maybe revisit a favorite spot.",
+                food: "Carne de Vinha d'Alhos",
+                highlights: ["Levada do Rei", "Waterfall Tunnel", "São Vicente"]
+            },
+            {
+                day: 13,
+                title: "Ocean Farewell",
+                subtitle: "Dolphins & Departure",
+                region: "Funchal",
+                tag: "Relaxing",
+                driveTime: "30 min",
+                effort: 1,
+                morning: "Take a **Catamaran or Zodiac boat trip** from Funchal Marina to spot dolphins and whales (very high success rate).",
+                afternoon: "Last minute souvenir shopping (Madeira wine, embroidery). Stroll Santa Catarina Park.",
+                evening: "Drive to the airport (CR7 Airport). Return rental car. Depart.",
+                food: "Madeira Wine",
+                highlights: ["Dolphin Watching", "Santa Catarina Park", "Last Gelato"]
+            }
+        ];
+
+        // --- Logic ---
+        let currentDayIndex = 0;
+
+        function initApp() {
+            renderDayNav();
+            renderDayContent(0);
+            renderCharts();
+        }
+
+        function renderDayNav() {
+            const container = document.getElementById('day-nav-container');
+            container.innerHTML = itinerary.map((day, index) => `
+                <button 
+                    onclick="switchDay(${index})"
+                    class="nav-btn flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-xl border-2 border-gray-200 flex flex-col items-center justify-center transition-all duration-200 hover:border-green-600 focus:outline-none ${index === 0 ? 'active' : 'bg-white text-gray-500'}">
+                    <span class="text-xs uppercase font-bold tracking-wider">Day</span>
+                    <span class="text-xl md:text-2xl font-bold">${day.day}</span>
+                </button>
+            `).join('');
+        }
+
+        function switchDay(index) {
+            currentDayIndex = index;
+            
+            // Update Nav Styles
+            const buttons = document.querySelectorAll('.nav-btn');
+            buttons.forEach((btn, idx) => {
+                if (idx === index) {
+                    btn.classList.add('active', 'scale-105');
+                    btn.classList.remove('bg-white', 'text-gray-500');
+                } else {
+                    btn.classList.remove('active', 'scale-105');
+                    btn.classList.add('bg-white', 'text-gray-500');
+                }
+            });
+
+            // Re-render Content with Fade
+            const contentDiv = document.getElementById('day-content');
+            contentDiv.classList.remove('fade-in');
+            void contentDiv.offsetWidth; // trigger reflow
+            contentDiv.classList.add('fade-in');
+            
+            renderDayContent(index);
+        }
+
+        function renderDayContent(index) {
+            const day = itinerary[index];
+            
+            // Text Content
+            document.getElementById('day-title').innerText = day.title;
+            document.getElementById('day-subtitle').innerText = day.subtitle;
+            document.getElementById('day-morning').innerHTML = formatText(day.morning);
+            document.getElementById('day-afternoon').innerHTML = formatText(day.afternoon);
+            document.getElementById('day-evening').innerHTML = formatText(day.evening);
+            document.getElementById('day-drive').innerText = day.driveTime;
+            document.getElementById('day-region').innerText = day.region;
+            document.getElementById('day-food').innerText = day.food;
+
+            // Tag Logic
+            const tagEl = document.getElementById('day-tag');
+            tagEl.innerText = day.tag;
+            tagEl.className = `inline-block px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase mb-2 tag-${day.tag.toLowerCase().split(' ')[0]}`;
+
+            // Highlights
+            const listEl = document.getElementById('day-highlights');
+            listEl.innerHTML = day.highlights.map(h => `<li class="flex items-start"><span class="text-green-500 mr-2">✓</span> ${h}</li>`).join('');
+
+            // Effort Visual
+            const effortEl = document.getElementById('day-effort');
+            let circles = '';
+            for(let i=0; i<5; i++) {
+                circles += `<div class="w-3 h-3 rounded-full ${i < day.effort ? 'bg-green-400' : 'bg-gray-700'}"></div>`;
+            }
+            effortEl.innerHTML = circles + `<span class="ml-2 text-xs text-gray-400">(${day.effort}/5)</span>`;
+        }
+
+        function formatText(text) {
+            // Simple markdown parser for bold
+            return text.replace(/\*\*(.*?)\*\*/g, '<span class="font-bold text-gray-900">$1</span>');
+        }
+
+        function renderCharts() {
+            // Chart 1: Trip Intensity Balance
+            const ctx1 = document.getElementById('tripBalanceChart').getContext('2d');
+            
+            // Count tags
+            const stats = { Hike: 0, Swim: 0, City: 0, Sightseeing: 0 };
+            itinerary.forEach(d => {
+                if(d.tag.includes('Hik')) stats.Hike++;
+                else if(d.tag.includes('Swim')) stats.Swim++;
+                else if(d.tag.includes('City') || d.tag.includes('Relax')) stats.City++;
+                else stats.Sightseeing++;
+            });
+
+            new Chart(ctx1, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Hiking (Nature)', 'Swimming/Relaxing', 'City/Culture', 'Sightseeing'],
+                    datasets: [{
+                        data: [stats.Hike, stats.Swim, stats.City, stats.Sightseeing],
+                        backgroundColor: ['#3F6212', '#0EA5E9', '#D97706', '#9CA3AF'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+
+            // Chart 2: Elevation Profile (Mock Data for key hikes)
+            const ctx2 = document.getElementById('elevationChart').getContext('2d');
+            new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: ['Pico Arieiro-Ruivo', 'Ponta S. Lourenço', '25 Fontes', 'Caldeirão Verde', 'Levada do Rei'],
+                    datasets: [{
+                        label: 'Elevation Gain (approx m)',
+                        data: [1000, 400, 350, 100, 50], // Rough estimates of cumulative gain/loss feeling
+                        backgroundColor: '#3F6212',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { display: false }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize
+        initApp();
+
+    </script>
+</body>
+</html>
